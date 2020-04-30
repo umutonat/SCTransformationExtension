@@ -10,14 +10,14 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:SCTransformationExtension.helloWorld"
+		"onCommand:SCTransformationExtension.generatescd"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "SCTransformationExtension.helloWorld",
-				"title": "Hello World"
+				"command": "SCTransformationExtension.generatescd",
+				"title": "Generate Smart Contract Descriptor"
 			}
 		]
 	},

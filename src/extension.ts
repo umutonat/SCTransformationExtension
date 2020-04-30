@@ -3,8 +3,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import fetch from 'node-fetch';
-import { Buffer } from 'buffer';
-import { stringify } from 'querystring';
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -16,7 +14,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('SCTransformationExtension.helloWorld', () => {
+	let disposable = vscode.commands.registerCommand('SCTransformationExtension.generatescd', () => {
 		// The code you place here will be executed every time your command is executed
 		var str = vscode.window.activeTextEditor?.document.getText();
 		var input = new Input(str ?? "", "Solidity");
@@ -24,17 +22,16 @@ export function activate(context: vscode.ExtensionContext) {
 			fs.writeFile('/tmp/SmartContractDescriptor.json', str, function (err) {
 				if (err) { return console.log(err); }
 			});
-		});
 
-		vscode.workspace.openTextDocument(vscode.Uri.parse("/tmp/SmartContractDescriptor.json")).then((a: vscode.TextDocument) => {
-			var column =vscode.window.activeTextEditor?.viewColumn??0;
-			vscode.window.showTextDocument(a, column+1, false);
-		}, (error: any) => {
-			console.error(error);
-			debugger;
+			vscode.workspace.openTextDocument(vscode.Uri.parse("/tmp/SmartContractDescriptor.json")).then((a: vscode.TextDocument) => {
+				var column =vscode.window.activeTextEditor?.viewColumn??0;
+				vscode.window.showTextDocument(a, column+1, false);
+			}, (error: any) => {
+				console.error(error);
+			});
 		});
 		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from SCTransformationExtension!');
+		vscode.window.showInformationMessage('SCTransformationExtension is Ready!');
 	});
 
 	context.subscriptions.push(disposable);
@@ -46,6 +43,7 @@ export function deactivate() { }
 async function SendToAPI(input: Input): Promise<string> {
 	process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 	const response = await fetch("https://localhost:5003/api/GetSmartContractDescriptor", {
+		timeout: 120 * 60 * 1000,
 		method: 'POST',
 		body: JSON.stringify(input),
 		headers: { 'Content-Type': 'application/json; charset=UTF-8' }
