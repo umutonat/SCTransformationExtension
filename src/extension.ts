@@ -5,41 +5,32 @@ import * as os from 'os';
 import extract = require('extract-zip');
 import util = require('util');
 import child_process = require('child_process');
-const execPromised = util.promisify(require('child_process').exec);
+const execFile = util.promisify(require('child_process').execFile);
 const streamPipeline = util.promisify(require('stream').pipeline);
 
-const windowsLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v0.1/win-x64.zip';
-const macLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v0.1/osx-x64.zip';
-const linuxLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v0.1/linux-x64.zip';
+const windowsLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/latest/win-x64.zip';
+const macLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/latest/osx-x64.zip';
+const linuxLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/latest/linux-x64.zip';
+var backendPath: string;
 var backendProcess: child_process.ChildProcess[] = [];
 
 export async function activate(context: vscode.ExtensionContext) {
+
 	if (process.platform === 'darwin') {
-		await DownloadAndExtract(macLink).then(async (str: string) => {
-			var process = child_process.execFile(str);
-			backendProcess.push(process);
-			console.info(str);
-		});
-		console.info(process.platform);
+		//TODO: Chmod for linux and os
+		backendPath = os.homedir + '.scbackend/SCTransformation.API';
+		await DownloadRunBackend(macLink);
 	} else if (process.platform === 'win32') {
-		await DownloadAndExtract(windowsLink).then(async (str: string) => {
-			var process = child_process.execFile(str);
-			backendProcess.push(process);
-			console.info(str);
-		});
-		console.info(process.platform);
+		backendPath = os.homedir + '.scbackend/SCTransformation.API.exe';
+		await DownloadRunBackend(windowsLink);
 	} else if (process.platform === 'linux') {
-		await DownloadAndExtract(linuxLink).then(async (str: string) => {
-			var process = child_process.execFile(str);
-			backendProcess.push(process);
-			console.info(str);
-		});
-		console.info(process.platform);
+		backendPath = os.homedir + '.scbackend/SCTransformation.API';
+		await DownloadRunBackend(linuxLink);
 	} else {
 		vscode.window.showWarningMessage('Your OS currently not supported!');
-		console.info(process.platform);
 		return;
 	}
+
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
@@ -53,6 +44,14 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(disposableGo);
 	context.subscriptions.push(disposableScipApp);
 	console.log('SCTransformation is ready!');
+}
+
+// this method is called when your extension is deactivated
+export async function deactivate() {
+	console.warn('deactivated');
+	backendProcess.forEach(process => {
+		process.kill();
+	});
 }
 
 function soliditySCDCommand() {
@@ -124,13 +123,6 @@ function SCIPAppCommand() {
 	});
 	vscode.window.showInformationMessage('Successfully generated client app!');
 }
-// this method is called when your extension is deactivated
-export async function deactivate() {
-	backendProcess.forEach(process => {
-		process.kill();
-	});
-	console.warn('deactivated');
-}
 
 async function RequestSCD(input: SCDInput): Promise<string> {
 	process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
@@ -164,20 +156,23 @@ async function RequestSCIP(input: SCIPInput): Promise<string> {
 	return "";
 }
 
-async function DownloadAndExtract(downloadPath: string): Promise<string> {
+async function DownloadRunBackend(downloadPath: string) {
 	try {
-		var directory = os.homedir + '/.scBackend/';
-		const response = await fetch(downloadPath);
-		if (!response.ok) {
-			console.log(`unexpected response ${response.statusText}`);
+		if (!fs.existsSync(backendPath)) {
+			var directory = os.homedir + '/.scBackend/';
+			const response = await fetch(downloadPath);
+			if (!response.ok) {
+				console.log(`unexpected response ${response.statusText}`);
+				return;
+			}
+			await streamPipeline(response.body, fs.createWriteStream('/tmp/scbackend.zip'));
+			await extract('/tmp/scbackend.zip', { dir: directory });
 		}
-		await streamPipeline(response.body, fs.createWriteStream('/tmp/scbackend.zip'));
-		await extract('/tmp/scbackend.zip', { dir: directory });
-		return directory;
+		var child: child_process.ChildProcess = await execFile(backendPath);
+		backendProcess.push(child);
 	}
 	catch (error) {
 		console.error(error);
-		return '';
 	}
 }
 
