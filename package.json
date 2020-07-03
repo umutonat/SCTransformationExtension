@@ -1,8 +1,8 @@
 {
 	"name": "SCTransformationExtension",
-	"displayName": "SCTransformationExtension",
-	"description": "",
-	"version": "0.0.1",
+	"displayName": "Smart Contract Transformation",
+	"description": "Tool for creation of smart contract descriptors and Smart contract invocation protocol application based on smart contract descriptor",
+	"version": "1.0.0",
 	"engines": {
 		"vscode": "^1.44.0"
 	},
@@ -10,14 +10,29 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:SCTransformationExtension.generatescd"
+		"onCommand:SCTransformationExtension.solidityscd",
+		"onCommand:SCTransformationExtension.javascriptscd",
+		"onCommand:SCTransformationExtension.goscd",
+		"onCommand:SCTransformationExtension.scipapp"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "SCTransformationExtension.generatescd",
-				"title": "Generate Smart Contract Descriptor"
+				"command": "SCTransformationExtension.solidityscd",
+				"title": "Generate Smart Contract Descriptor from Solidity"
+			},
+			{
+				"command": "SCTransformationExtension.javascriptscd",
+				"title": "Generate Smart Contract Descriptor from JavaScript"
+			},
+			{
+				"command": "SCTransformationExtension.goscd",
+				"title": "Generate Smart Contract Descriptor from Go"
+			},
+			{
+				"command": "SCTransformationExtension.scipapp",
+				"title": "Generate SCIP Application"
 			}
 		]
 	},
