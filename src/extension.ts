@@ -1,24 +1,39 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import fetch from 'node-fetch';
-import { Console } from 'console';
+import * as os from 'os';
+import extract = require('extract-zip');
+import util = require('util');
+import child_process = require('child_process');
+const execPromised = util.promisify(require('child_process').exec);
+const streamPipeline = util.promisify(require('stream').pipeline);
 
-const windowsLink = "https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v0.1/win-x64.zip";
-const macLink = "https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v0.1/osx-x64.zip";
-const linuxLink = "https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v0.1/linux-x64.zip";
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
+const windowsLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v0.1/win-x64.zip';
+const macLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v0.1/osx-x64.zip';
+const linuxLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v0.1/linux-x64.zip';
+var backendProcess: child_process.ChildProcess[] = [];
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
+export async function activate(context: vscode.ExtensionContext) {
 	if (process.platform === 'darwin') {
+		await DownloadAndExtract(macLink).then(async (str: string) => {
+			var process = child_process.execFile(str);
+			backendProcess.push(process);
+			console.info(str);
+		});
 		console.info(process.platform);
 	} else if (process.platform === 'win32') {
+		await DownloadAndExtract(windowsLink).then(async (str: string) => {
+			var process = child_process.execFile(str);
+			backendProcess.push(process);
+			console.info(str);
+		});
 		console.info(process.platform);
 	} else if (process.platform === 'linux') {
+		await DownloadAndExtract(linuxLink).then(async (str: string) => {
+			var process = child_process.execFile(str);
+			backendProcess.push(process);
+			console.info(str);
+		});
 		console.info(process.platform);
 	} else {
 		vscode.window.showWarningMessage('Your OS currently not supported!');
@@ -48,7 +63,6 @@ function soliditySCDCommand() {
 		fs.writeFile('/tmp/' + timestamp + '.json', JSON.stringify(new SCIPInput(str, "", "")), function (err) {
 			if (err) { return console.log(err); }
 		});
-
 		vscode.workspace.openTextDocument(vscode.Uri.parse('/tmp/' + timestamp + '.json')).then((a: vscode.TextDocument) => {
 			var column = vscode.window.activeTextEditor?.viewColumn ?? 0;
 			vscode.window.showTextDocument(a, column + 1, false);
@@ -66,7 +80,6 @@ function javaScriptSCDCommand() {
 		fs.writeFile('/tmp/' + timestamp + '.json', JSON.stringify(new SCIPInput(str, "", "")), function (err) {
 			if (err) { return console.log(err); }
 		});
-
 		vscode.workspace.openTextDocument(vscode.Uri.parse('/tmp/' + timestamp + '.json')).then((a: vscode.TextDocument) => {
 			var column = vscode.window.activeTextEditor?.viewColumn ?? 0;
 			vscode.window.showTextDocument(a, column + 1, false);
@@ -84,7 +97,6 @@ function goSCDCommand() {
 		fs.writeFile('/tmp/' + timestamp + '.json', JSON.stringify(new SCIPInput(str, "", "")), function (err) {
 			if (err) { return console.log(err); }
 		});
-
 		vscode.workspace.openTextDocument(vscode.Uri.parse('/tmp/' + timestamp + '.json')).then((a: vscode.TextDocument) => {
 			var column = vscode.window.activeTextEditor?.viewColumn ?? 0;
 			vscode.window.showTextDocument(a, column + 1, false);
@@ -103,7 +115,6 @@ function SCIPAppCommand() {
 		fs.writeFile('/tmp/' + timestamp + '.txt', str, function (err) {
 			if (err) { return console.log(err); }
 		});
-
 		vscode.workspace.openTextDocument(vscode.Uri.parse('/tmp/' + timestamp + '.txt')).then((a: vscode.TextDocument) => {
 			var column = vscode.window.activeTextEditor?.viewColumn ?? 0;
 			vscode.window.showTextDocument(a, column + 1, false);
@@ -114,9 +125,12 @@ function SCIPAppCommand() {
 	vscode.window.showInformationMessage('Successfully generated client app!');
 }
 // this method is called when your extension is deactivated
-export function deactivate() {
+export async function deactivate() {
+	backendProcess.forEach(process => {
+		process.kill();
+	});
 	console.warn('deactivated');
- }
+}
 
 async function RequestSCD(input: SCDInput): Promise<string> {
 	process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
@@ -143,13 +157,28 @@ async function RequestSCIP(input: SCIPInput): Promise<string> {
 		body: JSON.stringify(input),
 		headers: { 'Content-Type': 'application/json; charset=UTF-8' }
 	});
-
 	if (!response.ok) { /* Handle */ }
-
 	if (response.body !== null) {
 		return JSON.stringify(await response.json());
 	}
 	return "";
+}
+
+async function DownloadAndExtract(downloadPath: string): Promise<string> {
+	try {
+		var directory = os.homedir + '/.scBackend/';
+		const response = await fetch(downloadPath);
+		if (!response.ok) {
+			console.log(`unexpected response ${response.statusText}`);
+		}
+		await streamPipeline(response.body, fs.createWriteStream('/tmp/scbackend.zip'));
+		await extract('/tmp/scbackend.zip', { dir: directory });
+		return directory;
+	}
+	catch (error) {
+		console.error(error);
+		return '';
+	}
 }
 
 class SCDInput {
