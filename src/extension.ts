@@ -8,9 +8,9 @@ import child_process = require('child_process');
 const execFile = util.promisify(require('child_process').execFile);
 const streamPipeline = util.promisify(require('stream').pipeline);
 
-const windowsLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/latest/win-x64.zip';
-const macLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/latest/osx-x64.zip';
-const linuxLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/latest/linux-x64.zip';
+const windowsLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v1.1/win-x64.zip';
+const macLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v1.1/osx-x64.zip';
+const linuxLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v1.1/linux-x64.zip';
 var backendPath: string;
 var backendProcess: child_process.ChildProcess[] = [];
 
@@ -18,13 +18,13 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	if (process.platform === 'darwin') {
 		//TODO: Chmod for linux and os
-		backendPath = os.homedir + '.scbackend/SCTransformation.API';
+		backendPath = os.homedir + '/.scbackend/SCTransformation.API';
 		await DownloadRunBackend(macLink);
 	} else if (process.platform === 'win32') {
-		backendPath = os.homedir + '.scbackend/SCTransformation.API.exe';
+		backendPath = os.homedir + '/.scbackend/SCTransformation.API.exe';
 		await DownloadRunBackend(windowsLink);
 	} else if (process.platform === 'linux') {
-		backendPath = os.homedir + '.scbackend/SCTransformation.API';
+		backendPath = os.homedir + '/.scbackend/SCTransformation.API';
 		await DownloadRunBackend(linuxLink);
 	} else {
 		vscode.window.showWarningMessage('Your OS currently not supported!');
@@ -126,7 +126,7 @@ function SCIPAppCommand() {
 
 async function RequestSCD(input: SCDInput): Promise<string> {
 	process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-	const response = await fetch("https://localhost:5003/api/GetSmartContractDescriptor", {
+	const response = await fetch("https://localhost:5001/api/GetSmartContractDescriptor", {
 		timeout: 120 * 60 * 1000,
 		method: 'POST',
 		body: JSON.stringify(input),
@@ -143,7 +143,7 @@ async function RequestSCD(input: SCDInput): Promise<string> {
 
 async function RequestSCIP(input: SCIPInput): Promise<string> {
 	process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-	const response = await fetch("https://localhost:5003/api/GetSmartContractInvocationProtocol", {
+	const response = await fetch("https://localhost:5001/api/GetSmartContractInvocationProtocol", {
 		timeout: 120 * 60 * 1000,
 		method: 'POST',
 		body: JSON.stringify(input),
@@ -168,8 +168,9 @@ async function DownloadRunBackend(downloadPath: string) {
 			await streamPipeline(response.body, fs.createWriteStream('/tmp/scbackend.zip'));
 			await extract('/tmp/scbackend.zip', { dir: directory });
 		}
-		var child: child_process.ChildProcess = await execFile(backendPath);
+		var child: child_process.ChildProcess = execFile(backendPath);
 		backendProcess.push(child);
+		await new Promise(resolve => setTimeout(resolve, 1000));
 	}
 	catch (error) {
 		console.error(error);
