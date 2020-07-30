@@ -31,7 +31,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		return;
 	}
 
-
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
@@ -84,7 +83,7 @@ async function SCIPAppCommand() {
 	var input: SCIPInput = new SCIPInput(str??"", packageName??"", callbackUrl??"");
 	var timestamp = Date.now().toString();
 	await RequestSCIP(input).then((str: string) => {
-		fs.writeFile('/tmp/' + timestamp + '.txt', str, function (err) {
+		fs.writeFile('/tmp/' + timestamp + '.txt', "Client application path: "+str, function (err) {
 			if (err) { return console.log(err); }
 		});
 		vscode.workspace.openTextDocument(vscode.Uri.parse('/tmp/' + timestamp + '.txt')).then((a: vscode.TextDocument) => {
@@ -106,7 +105,7 @@ async function RequestSCD(input: SCDInput): Promise<string> {
 		headers: { 'Content-Type': 'application/json; charset=UTF-8' }
 	});
 
-	if (!response.ok) { /* Handle */ }
+	if (!response.ok) {}
 
 	if (response.body !== null) {
 		return JSON.stringify(await response.json());
@@ -122,9 +121,9 @@ async function RequestSCIP(input: SCIPInput): Promise<string> {
 		body: JSON.stringify(input),
 		headers: { 'Content-Type': 'application/json; charset=UTF-8' }
 	});
-	if (!response.ok) { /* Handle */ }
+	if (!response.ok) {}
 	if (response.body !== null) {
-		return JSON.stringify(await response.json());
+		return await response.text();
 	}
 	return "";
 }
@@ -142,7 +141,7 @@ async function DownloadRunBackend(downloadPath: string) {
 			await extract('/tmp/scbackend.zip', { dir: directory });
 		}
 		backendProcess = execFile(backendPath);
-		await new Promise(resolve => setTimeout(resolve, 3000));
+		await new Promise(resolve => setTimeout(resolve, 5000));
 	}
 	catch (error) {
 		console.error(error);
