@@ -11,6 +11,9 @@ SCTransformation extension can be used to ease up automated generation of Smart 
 
 Make sure localhost:5001 is not used.
 
+### 1.0.1
+
+Bug fixes.
 
 ### 1.0.0
 
