@@ -5,9 +5,10 @@
     "email": "umutonat.artuvan@artuvan.com",
     "url": "https://artuvan.com"
   },
+  "icon": "images/icon.png",
   "repository": {
 	"type": "git",
-	"url": "git://github.com/umutonat/SCTransformationExtension.git"
+	"url": "https://github.com/umutonat/SCTransformationExtension"
   },
   "publisher": "umutartuvan",
   "displayName": "Smart Contract Transformation",
