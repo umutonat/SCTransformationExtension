@@ -12,7 +12,7 @@ const windowsLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerat
 const macLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v1.1/osx-x64.zip';
 const linuxLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v1.1/linux-x64.zip';
 var backendPath: string;
-var backendProcess: child_process.ChildProcess[] = [];
+var backendProcess: child_process.ChildProcess;
 
 export async function activate(context: vscode.ExtensionContext) {
 
@@ -35,65 +35,30 @@ export async function activate(context: vscode.ExtensionContext) {
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
-	let disposableSolidity = vscode.commands.registerCommand('SCTransformationExtension.solidityscd', soliditySCDCommand);
-	let disposableJavaScript = vscode.commands.registerCommand('SCTransformationExtension.javascriptscd', javaScriptSCDCommand);
-	let disposableGo = vscode.commands.registerCommand('SCTransformationExtension.goscd', goSCDCommand);
+	let disposableScd = vscode.commands.registerCommand('SCTransformationExtension.scd', SCDCommand);
 	let disposableScipApp = vscode.commands.registerCommand('SCTransformationExtension.scipapp', SCIPAppCommand);
-	context.subscriptions.push(disposableSolidity);
-	context.subscriptions.push(disposableJavaScript);
-	context.subscriptions.push(disposableGo);
+	context.subscriptions.push(disposableScd);
 	context.subscriptions.push(disposableScipApp);
 	console.log('SCTransformation is ready!');
 }
 
 // this method is called when your extension is deactivated
 export async function deactivate() {
-	console.warn('deactivated');
-	backendProcess.forEach(process => {
-		process.kill();
-	});
+	backendProcess.kill();
 }
 
-function soliditySCDCommand() {
+async function SCDCommand(){
 	var str = vscode.window.activeTextEditor?.document.getText();
-	var input = new SCDInput(str ?? "", "Solidity");
+	let options: vscode.InputBoxOptions = {
+		prompt: "Type of Document: ",
+		placeHolder: "Solidity, Go or JavaScript (case sensitive)"
+	};
+	
+	var type = await vscode.window.showInputBox(options);
+	var input = new SCDInput(str ?? "", type??"");
 	var timestamp = Date.now().toString();
-	RequestSCD(input).then((str: string) => {
-		fs.writeFile('/tmp/' + timestamp + '.json', JSON.stringify(new SCIPInput(str, "", "")), function (err) {
-			if (err) { return console.log(err); }
-		});
-		vscode.workspace.openTextDocument(vscode.Uri.parse('/tmp/' + timestamp + '.json')).then((a: vscode.TextDocument) => {
-			var column = vscode.window.activeTextEditor?.viewColumn ?? 0;
-			vscode.window.showTextDocument(a, column + 1, false);
-		}, (error: any) => {
-			console.error(error);
-		});
-	});
-	vscode.window.showInformationMessage('Successfully generated scd!');
-}
-function javaScriptSCDCommand() {
-	var str = vscode.window.activeTextEditor?.document.getText();
-	var input = new SCDInput(str ?? "", "JavaScript");
-	var timestamp = Date.now().toString();
-	RequestSCD(input).then((str: string) => {
-		fs.writeFile('/tmp/' + timestamp + '.json', JSON.stringify(new SCIPInput(str, "", "")), function (err) {
-			if (err) { return console.log(err); }
-		});
-		vscode.workspace.openTextDocument(vscode.Uri.parse('/tmp/' + timestamp + '.json')).then((a: vscode.TextDocument) => {
-			var column = vscode.window.activeTextEditor?.viewColumn ?? 0;
-			vscode.window.showTextDocument(a, column + 1, false);
-		}, (error: any) => {
-			console.error(error);
-		});
-	});
-	vscode.window.showInformationMessage('Successfully generated scd!');
-}
-function goSCDCommand() {
-	var str = vscode.window.activeTextEditor?.document.getText();
-	var input = new SCDInput(str ?? "", "Go");
-	var timestamp = Date.now().toString();
-	RequestSCD(input).then((str: string) => {
-		fs.writeFile('/tmp/' + timestamp + '.json', JSON.stringify(new SCIPInput(str, "", "")), function (err) {
+	await RequestSCD(input).then((str: string) => {
+		fs.writeFile('/tmp/' + timestamp + '.json', str, function (err) {
 			if (err) { return console.log(err); }
 		});
 		vscode.workspace.openTextDocument(vscode.Uri.parse('/tmp/' + timestamp + '.json')).then((a: vscode.TextDocument) => {
@@ -106,11 +71,19 @@ function goSCDCommand() {
 	vscode.window.showInformationMessage('Successfully generated scd!');
 }
 
-function SCIPAppCommand() {
+async function SCIPAppCommand() {
 	var str = vscode.window.activeTextEditor?.document.getText();
-	var input: SCIPInput = JSON.parse(str ?? "");
+	let packageOptions: vscode.InputBoxOptions = {
+		prompt: "Package name for client app: "
+	};
+	var packageName = await vscode.window.showInputBox(packageOptions);
+	let callbackOptions: vscode.InputBoxOptions = {
+		prompt: "Callback URL of client app: "
+	};
+	var callbackUrl = await vscode.window.showInputBox(callbackOptions);
+	var input: SCIPInput = new SCIPInput(str??"", packageName??"", callbackUrl??"");
 	var timestamp = Date.now().toString();
-	RequestSCIP(input).then((str: string) => {
+	await RequestSCIP(input).then((str: string) => {
 		fs.writeFile('/tmp/' + timestamp + '.txt', str, function (err) {
 			if (err) { return console.log(err); }
 		});
@@ -168,9 +141,8 @@ async function DownloadRunBackend(downloadPath: string) {
 			await streamPipeline(response.body, fs.createWriteStream('/tmp/scbackend.zip'));
 			await extract('/tmp/scbackend.zip', { dir: directory });
 		}
-		var child: child_process.ChildProcess = execFile(backendPath);
-		backendProcess.push(child);
-		await new Promise(resolve => setTimeout(resolve, 1000));
+		backendProcess = execFile(backendPath);
+		await new Promise(resolve => setTimeout(resolve, 3000));
 	}
 	catch (error) {
 		console.error(error);
@@ -190,9 +162,9 @@ class SCIPInput {
 	content: string;
 	packageName: string;
 	callbackUrl: string;
-	constructor(content: string, type: string, callbackUrl: string) {
+	constructor(content: string, packageName: string, callbackUrl: string) {
 		this.content = content;
-		this.packageName = type;
+		this.packageName = packageName;
 		this.callbackUrl = callbackUrl;
 	}
 }

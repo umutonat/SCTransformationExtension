@@ -10,25 +10,15 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:SCTransformationExtension.solidityscd",
-		"onCommand:SCTransformationExtension.javascriptscd",
-		"onCommand:SCTransformationExtension.goscd",
+		"onCommand:SCTransformationExtension.scd",
 		"onCommand:SCTransformationExtension.scipapp"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "SCTransformationExtension.solidityscd",
-				"title": "Generate Smart Contract Descriptor from Solidity"
-			},
-			{
-				"command": "SCTransformationExtension.javascriptscd",
-				"title": "Generate Smart Contract Descriptor from JavaScript"
-			},
-			{
-				"command": "SCTransformationExtension.goscd",
-				"title": "Generate Smart Contract Descriptor from Go"
+				"command": "SCTransformationExtension.scd",
+				"title": "Generate Smart Contract Descriptor"
 			},
 			{
 				"command": "SCTransformationExtension.scipapp",
