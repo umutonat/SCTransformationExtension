@@ -13,7 +13,7 @@
   "publisher": "umutartuvan",
   "displayName": "Smart Contract Transformation",
   "description": "Tool for creation of smart contract descriptors and Smart contract invocation protocol application based on smart contract descriptor",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "engines": {
     "vscode": "^1.44.0"
   },
