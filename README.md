@@ -9,7 +9,7 @@ SCTransformation extension can be used to ease up automated generation of Smart 
 
 ## Requirements
 
-Make sure localhost:5000 and localhost:5001 is not used.
+Make sure localhost:5055 is not used.
 
 ### 1.0.2
 

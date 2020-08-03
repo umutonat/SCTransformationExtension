@@ -19,13 +19,13 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	if (process.platform === 'darwin') {
 		//TODO: Chmod for linux and os
-		backendPath = os.homedir + path.sep+'.scbackend'+path.sep+ 'SCTransformation.API';
+		backendPath = os.homedir + path.sep + '.scbackend' + path.sep + 'SCTransformation.API';
 		await DownloadRunBackend(macLink);
 	} else if (process.platform === 'win32') {
-		backendPath = os.homedir + path.sep+'.scbackend'+path.sep+ 'SCTransformation.API.exe';
+		backendPath = os.homedir + path.sep + '.scbackend' + path.sep + 'SCTransformation.API.exe';
 		await DownloadRunBackend(windowsLink);
 	} else if (process.platform === 'linux') {
-		backendPath = os.homedir + path.sep+'.scbackend'+path.sep+ 'SCTransformation.API';
+		backendPath = os.homedir + path.sep + '.scbackend' + path.sep + 'SCTransformation.API';
 		await DownloadRunBackend(linuxLink);
 	} else {
 		vscode.window.showWarningMessage('Your OS currently not supported!');
@@ -47,21 +47,21 @@ export async function deactivate() {
 	backendProcess.kill();
 }
 
-async function SCDCommand(){
+async function SCDCommand() {
 	var str = vscode.window.activeTextEditor?.document.getText();
 	let options: vscode.InputBoxOptions = {
 		prompt: "Type of Document: ",
 		placeHolder: "Solidity, Go or JavaScript (case sensitive)"
 	};
-	
+
 	var type = await vscode.window.showInputBox(options);
-	var input = new SCDInput(str ?? "", type??"");
+	var input = new SCDInput(str ?? "", type ?? "");
 	var timestamp = Date.now().toString();
 	await RequestSCD(input).then((str: string) => {
-		fs.writeFile(path.sep+'tmp' +path.sep + timestamp + '.json', str, function (err) {
+		fs.writeFile(path.sep + 'tmp' + path.sep + timestamp + '.json', str, function (err) {
 			if (err) { return console.log(err); }
 		});
-		vscode.workspace.openTextDocument(vscode.Uri.parse(path.sep+'tmp' +path.sep + timestamp + '.json')).then((a: vscode.TextDocument) => {
+		vscode.workspace.openTextDocument(vscode.Uri.parse(path.sep + 'tmp' + path.sep + timestamp + '.json')).then((a: vscode.TextDocument) => {
 			var column = vscode.window.activeTextEditor?.viewColumn ?? 0;
 			vscode.window.showTextDocument(a, column + 1, false);
 		}, (error: any) => {
@@ -81,13 +81,13 @@ async function SCIPAppCommand() {
 		prompt: "Callback URL of client app: "
 	};
 	var callbackUrl = await vscode.window.showInputBox(callbackOptions);
-	var input: SCIPInput = new SCIPInput(str??"", packageName??"", callbackUrl??"");
+	var input: SCIPInput = new SCIPInput(str ?? "", packageName ?? "", callbackUrl ?? "");
 	var timestamp = Date.now().toString();
 	await RequestSCIP(input).then((str: string) => {
-		fs.writeFile(path.sep+'tmp' +path.sep+ timestamp + '.txt', "Client application path: "+str, function (err) {
+		fs.writeFile(path.sep + 'tmp' + path.sep + timestamp + '.txt', "Client application path: " + str, function (err) {
 			if (err) { return console.log(err); }
 		});
-		vscode.workspace.openTextDocument(vscode.Uri.parse(path.sep+'tmp' +path.sep + timestamp + '.txt')).then((a: vscode.TextDocument) => {
+		vscode.workspace.openTextDocument(vscode.Uri.parse(path.sep + 'tmp' + path.sep + timestamp + '.txt')).then((a: vscode.TextDocument) => {
 			var column = vscode.window.activeTextEditor?.viewColumn ?? 0;
 			vscode.window.showTextDocument(a, column + 1, false);
 		}, (error: any) => {
@@ -98,14 +98,14 @@ async function SCIPAppCommand() {
 }
 
 async function RequestSCD(input: SCDInput): Promise<string> {
-	const response = await fetch("http://localhost:5005/api/GetSmartContractDescriptor", {
+	const response = await fetch("http://localhost:5055/api/GetSmartContractDescriptor", {
 		timeout: 120 * 60 * 1000,
 		method: 'POST',
 		body: JSON.stringify(input),
 		headers: { 'Content-Type': 'application/json; charset=UTF-8' }
 	});
 
-	if (!response.ok) {}
+	if (!response.ok) { }
 
 	if (response.body !== null) {
 		return JSON.stringify(await response.json());
@@ -114,13 +114,13 @@ async function RequestSCD(input: SCDInput): Promise<string> {
 }
 
 async function RequestSCIP(input: SCIPInput): Promise<string> {
-	const response = await fetch("http://localhost:5005/api/GetSmartContractInvocationProtocol", {
+	const response = await fetch("http://localhost:5055/api/GetSmartContractInvocationProtocol", {
 		timeout: 120 * 60 * 1000,
 		method: 'POST',
 		body: JSON.stringify(input),
 		headers: { 'Content-Type': 'application/json; charset=UTF-8' }
 	});
-	if (!response.ok) {}
+	if (!response.ok) { }
 	if (response.body !== null) {
 		return await response.text();
 	}
@@ -130,14 +130,14 @@ async function RequestSCIP(input: SCIPInput): Promise<string> {
 async function DownloadRunBackend(downloadPath: string) {
 	try {
 		if (!fs.existsSync(backendPath)) {
-			var directory = os.homedir + path.sep+'.scbackend'+path.sep;
+			var directory = os.homedir + path.sep + '.scbackend' + path.sep;
 			const response = await fetch(downloadPath);
 			if (!response.ok) {
 				console.log(`unexpected response ${response.statusText}`);
 				return;
 			}
-			await streamPipeline(response.body, fs.createWriteStream(path.sep+'tmp' +path.sep +'scbackend.zip'));
-			await extract(path.sep+'tmp' +path.sep +'scbackend.zip', { dir: directory });
+			await streamPipeline(response.body, fs.createWriteStream(path.sep + 'tmp' + path.sep + 'scbackend.zip'));
+			await extract(path.sep + 'tmp' + path.sep + 'scbackend.zip', { dir: directory });
 		}
 		backendProcess = execFile(backendPath);
 		await new Promise(resolve => setTimeout(resolve, 5000));
