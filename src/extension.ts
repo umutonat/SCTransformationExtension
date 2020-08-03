@@ -9,9 +9,9 @@ import path = require('path');
 const execFile = util.promisify(require('child_process').execFile);
 const streamPipeline = util.promisify(require('stream').pipeline);
 
-const windowsLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v1.1/win-x64.zip';
-const macLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v1.1/osx-x64.zip';
-const linuxLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v1.1/linux-x64.zip';
+const windowsLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v1.2/win-x64.zip';
+const macLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v1.2/osx-x64.zip';
+const linuxLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v1.2/linux-x64.zip';
 var backendPath: string;
 var backendProcess: child_process.ChildProcess;
 
