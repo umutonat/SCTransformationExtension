@@ -58,10 +58,10 @@ async function SCDCommand() {
 	var input = new SCDInput(str ?? "", type ?? "");
 	var timestamp = Date.now().toString();
 	await RequestSCD(input).then((str: string) => {
-		fs.writeFile(path.sep + 'tmp' + path.sep + timestamp + '.json', str, function (err) {
+		fs.writeFile(os.tmpdir + path.sep + timestamp + '.json', str, function (err) {
 			if (err) { return console.log(err); }
 		});
-		vscode.workspace.openTextDocument(vscode.Uri.parse(path.sep + 'tmp' + path.sep + timestamp + '.json')).then((a: vscode.TextDocument) => {
+		vscode.workspace.openTextDocument(os.tmpdir + path.sep + timestamp + '.json').then((a: vscode.TextDocument) => {
 			var column = vscode.window.activeTextEditor?.viewColumn ?? 0;
 			vscode.window.showTextDocument(a, column + 1, false);
 		}, (error: any) => {
@@ -84,10 +84,10 @@ async function SCIPAppCommand() {
 	var input: SCIPInput = new SCIPInput(str ?? "", packageName ?? "", callbackUrl ?? "");
 	var timestamp = Date.now().toString();
 	await RequestSCIP(input).then((str: string) => {
-		fs.writeFile(path.sep + 'tmp' + path.sep + timestamp + '.txt', "Client application path: " + str, function (err) {
+		fs.writeFile(os.tmpdir + path.sep + timestamp + '.txt', "Client application path: " + str, function (err) {
 			if (err) { return console.log(err); }
 		});
-		vscode.workspace.openTextDocument(vscode.Uri.parse(path.sep + 'tmp' + path.sep + timestamp + '.txt')).then((a: vscode.TextDocument) => {
+		vscode.workspace.openTextDocument(os.tmpdir + path.sep + timestamp + '.txt').then((a: vscode.TextDocument) => {
 			var column = vscode.window.activeTextEditor?.viewColumn ?? 0;
 			vscode.window.showTextDocument(a, column + 1, false);
 		}, (error: any) => {
@@ -136,8 +136,8 @@ async function DownloadRunBackend(downloadPath: string) {
 				console.log(`unexpected response ${response.statusText}`);
 				return;
 			}
-			await streamPipeline(response.body, fs.createWriteStream(path.sep + 'tmp' + path.sep + 'scbackend.zip'));
-			await extract(path.sep + 'tmp' + path.sep + 'scbackend.zip', { dir: directory });
+			await streamPipeline(response.body, fs.createWriteStream(os.tmpdir + path.sep + 'scbackend.zip'));
+			await extract(os.tmpdir + path.sep + 'scbackend.zip', { dir: directory });
 		}
 		backendProcess = execFile(backendPath);
 		await new Promise(resolve => setTimeout(resolve, 5000));
