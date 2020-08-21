@@ -9,22 +9,24 @@ import path = require('path');
 const execFile = util.promisify(require('child_process').execFile);
 const streamPipeline = util.promisify(require('stream').pipeline);
 
-const windowsLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v1.2/win-x64.zip';
-const macLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v1.2/osx-x64.zip';
-const linuxLink = 'https://github.com/umutonat/SmartContractDescriptorsGenerator/releases/download/v1.2/linux-x64.zip';
+const windowsLink = 'https://github.com/TIHBS/SmartContractDescriptorsGenerator/releases/download/v1.2/win-x64.zip';
+const macLink = 'https://github.com/TIHBS/SmartContractDescriptorsGenerator/releases/download/v1.2/osx-x64.zip';
+const linuxLink = 'https://github.com/TIHBS/SmartContractDescriptorsGenerator/releases/download/v1.2/linux-x64.zip';
 var backendPath: string;
 var backendProcess: child_process.ChildProcess;
 
 export async function activate(context: vscode.ExtensionContext) {
 
 	if (process.platform === 'darwin') {
-		//TODO: Chmod for linux and os
 		backendPath = os.homedir + path.sep + '.scbackend' + path.sep + 'SCTransformation.API';
+		vscode.window.showInformationMessage('Detected system is MacOS');
 		await DownloadRunBackend(macLink);
 	} else if (process.platform === 'win32') {
 		backendPath = os.homedir + path.sep + '.scbackend' + path.sep + 'SCTransformation.API.exe';
+		vscode.window.showInformationMessage('Detected system is Windows');
 		await DownloadRunBackend(windowsLink);
 	} else if (process.platform === 'linux') {
+		vscode.window.showInformationMessage('Detected system is Linux');
 		backendPath = os.homedir + path.sep + '.scbackend' + path.sep + 'SCTransformation.API';
 		await DownloadRunBackend(linuxLink);
 	} else {
@@ -39,7 +41,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	let disposableScipApp = vscode.commands.registerCommand('SCTransformationExtension.scipapp', SCIPAppCommand);
 	context.subscriptions.push(disposableScd);
 	context.subscriptions.push(disposableScipApp);
-	console.log('SCTransformation is ready!');
 }
 
 // this method is called when your extension is deactivated
@@ -130,20 +131,24 @@ async function RequestSCIP(input: SCIPInput): Promise<string> {
 async function DownloadRunBackend(downloadPath: string) {
 	try {
 		if (!fs.existsSync(backendPath)) {
+			vscode.window.showInformationMessage('Downloading necessary files, it may take up to 1 minute according to your internet speed');
 			var directory = os.homedir + path.sep + '.scbackend' + path.sep;
 			const response = await fetch(downloadPath);
 			if (!response.ok) {
+				vscode.window.showErrorMessage('Error downloading required files');
 				console.log(`unexpected response ${response.statusText}`);
 				return;
 			}
 			await streamPipeline(response.body, fs.createWriteStream(os.tmpdir + path.sep + 'scbackend.zip'));
+			vscode.window.showInformationMessage('Installing files...');
 			await extract(os.tmpdir + path.sep + 'scbackend.zip', { dir: directory });
 		}
 		backendProcess = execFile(backendPath);
 		await new Promise(resolve => setTimeout(resolve, 5000));
+		vscode.window.showInformationMessage('Everything set up!');
 	}
 	catch (error) {
-		console.error(error);
+		vscode.window.showErrorMessage('Something went wrong downloading and installing required files');
 	}
 }
 
